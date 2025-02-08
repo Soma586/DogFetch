@@ -1,0 +1,127 @@
+.searchContainer{
+
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+
+.searchable-dropdown {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .searchable-dropdown .selected-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .searchable-dropdown .option-tag {
+    display: flex;
+    align-items: center;
+    background-color: #3498db;
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 14px;
+  }
+  
+  .searchable-dropdown .remove-button {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    margin-left: 8px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .searchable-dropdown .remove-button:hover {
+    opacity: 0.8;
+  }
+  
+  .searchable-dropdown .dropdown {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .searchable-dropdown .search-input {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+  }
+  
+  .searchable-dropdown .options-list {
+    max-height: 240px; /* Height for 6 items (6 * 40px) */
+    overflow-y: auto;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .searchable-dropdown .option-item {
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    height: 40px; /* Fixed height for each item */
+    box-sizing: border-box;
+  }
+  
+  .searchable-dropdown .option-item:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .searchable-dropdown .checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .searchable-dropdown .checkbox.checked {
+    background-color: #3498db;
+    border-color: #3498db;
+  }
+  
+  .searchable-dropdown .check-icon {
+    color: #ffffff;
+  }
+  
+  .searchable-dropdown .no-results {
+    padding: 8px;
+    color: #999;
+  }
+  
+  /* Custom scrollbar styles */
+  .searchable-dropdown .options-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .searchable-dropdown .options-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  .searchable-dropdown .options-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  .searchable-dropdown .options-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  
+  

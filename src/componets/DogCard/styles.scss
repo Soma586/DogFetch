@@ -1,0 +1,31 @@
+
+
+
+.dogCard {
+
+
+
+    display: flex;
+    justify-content: row;
+
+    width : 400px;
+    height: 300px;
+    border-top: 1px solid grey;
+    border-bottom: 1px solid grey;
+
+    img {
+        width: 200px;
+    }
+
+}
+
+.dogimage {
+    height: 100%;
+    width: 200px;
+    object-fit: cover;
+}
+
+.dogInfo {
+    //find a better way to cenet
+    padding-top: 50px;
+}
