@@ -301,7 +301,7 @@ const Main = () => {
               <div className="d-flex flex-wrap">
                 {dogData.length !== 0 &&
                   dogData.map((item) => (
-                    <DogCard {...item} handleFavorites={handleFavorites} />
+                    <DogCard key={item.id} {...item} handleFavorites={handleFavorites} />
                   ))}
               </div>
             </div>
