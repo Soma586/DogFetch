@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-
+import { BASE_URL } from './utiltiy';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -11,19 +11,6 @@ export function AuthProvider({ children }) {
     //checkAuthStatus();
   }, [isAuthenticated]);
 
-  // const checkAuthStatus = async () => {
-  //   try {
-  //     const response = await fetch('/api/check-auth', {
-  //       credentials: 'include'
-  //     });
-  //     if (response.ok) {
-  //       setIsAuthenticated(true);
-  //       startLogoutTimer();
-  //     }
-  //   } catch (error) {
-  //     setIsAuthenticated(false);
-  //   }
-  // };
 
   const startLogoutTimer = () => {
     // Clear existing timer
@@ -39,10 +26,9 @@ export function AuthProvider({ children }) {
 
   const handleLogin = async (credentials) => {
 
-    console.log("this has been called")
-    console.log(credentials)
+
     try {
-      const response = await fetch('https://frontend-take-home-service.fetch.com/auth/login', {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -51,8 +37,6 @@ export function AuthProvider({ children }) {
         body: JSON.stringify(credentials),
       });
 
-      console.log('this is the response')
-      console.log(response)
       if (response.ok) {
         setIsAuthenticated(true);
         startLogoutTimer();
@@ -64,9 +48,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async (handleFullResetOnLogOut) => {
     try {
-      await fetch('https://frontend-take-home-service.fetch.com/auth/logout', {
+      await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -74,6 +58,8 @@ export function AuthProvider({ children }) {
       console.error('Logout error:', error);
     } finally {
       setIsAuthenticated(false);
+      handleFullResetOnLogOut()
+      
       if (logoutTimer) clearTimeout(logoutTimer);
     }
   };

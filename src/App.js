@@ -1,361 +1,376 @@
-import logo from './logo.svg';
-import './App.css';
-import TokenTagger from './componets/TokenTagger';
-import DogCard from './componets/DogCard';
-import SearchableDropdown from './componets/SearchDropDown';
-import {useState, useEffect} from 'react'
-import { AuthProvider, useAuth } from './AuthContext';
-//import { useAuth } from './Auth';
+
+import "./App.scss";
+import DogCard from "./componets/DogCard";
+import SearchableDropdown from "./componets/SearchDropDown";
+import { useState, useEffect } from "react";
+import { AuthProvider, useAuth } from "./AuthContext";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { BASE_URL } from "./utiltiy";
 
 
-const BASE_URL = 'https://frontend-take-home-service.fetch.com'
 
-const options = [
-  { value: "apple", label: "Apple" },
-  { value: "banana", label: "Banana" },
-  { value: "cherry", label: "Cherry" },
-  { value: "date", label: "Date" },
-  { value: "elderberry", label: "Elderberry" },
-  { value: "fig", label: "Fig" },
-  { value: "grape", label: "Grape" },
-  { value: "honeydew", label: "Honeydew" },
-  { value: "kiwi", label: "Kiwi" },
-  { value: "lemon", label: "Lemon" },
-  { value: "mango", label: "Mango" },
-  { value: "nectarine", label: "Nectarine" },
-  { value: "orange", label: "Orange" },
-  { value: "papaya", label: "Papaya" },
-]
-
-
-const params = {
-  breeds: [],      // Array of breeds
-  zipCodes: [],        // Array of zip codes
-  ageMin: null,                           // Minimum age
-  ageMax: null,                          // Maximum age
-  size: null,                            // Number of results per page (config)
-  from: null,                             // Pagination offset (config)
-  sort: null                    // Sort order (config)
+const DEFAULT_PARAMS = {
+  breeds: [], // Array of breeds
+  ageMin: "", // Minimum age
+  ageMax: "", // Maximum age
+  size: null, // Number of results per page (config)
+  from: null, // Pagination offset (config)
+  sort: "breed:asc", // Sort order (config)
 };
 
-
-
 const Main = () => {
+  const { isAuthenticated, handleLogout } = useAuth(); // Get authentication status
 
-  const { isAuthenticated, handleLogout } = useAuth();
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [breedList, setBreedList] = useState([]);
+  const [size, setSize] = useState(25);
+  const [minAge, setMinAge] = useState(null);
+  const [maxAge, setMaxAge] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [searchParams, setSearchParams] = useState(DEFAULT_PARAMS);
+  const [dogData, setDogData] = useState([]);
+  const [hasNext, setHasNext] = useState(null);
+  const [hasPrev, setHasPrev] = useState(null);
+  const [pageCount, setPageCount] = useState(1);
+  const [favoriteList, setFavoriteList] = useState([]);
+  const [yourMatch, setMatch] = useState(null);
 
-
-  const [selectedOptions, setSelectedOptions] = useState([])
-  const [breedList, setBreedList] = useState([])
-
-
-  const [searchResults, setSearchResults] = useState([])
-  const [searchParams, setSearchParams] = useState(params)
-  const [dogData, setDogData] = useState([])
-
+  // Fetch dog breeds on component mount (only if authenticated)
   useEffect(() => {
+    if (!isAuthenticated) return; // Exit if not authenticated
 
     const abortController = new AbortController();
 
-    const getDogData = async () => {
-      try {
-        const response = await fetch('https://frontend-take-home-service.fetch.com/dogs/search', {
-          method: 'GET',
-          credentials: 'include',
-          signal: abortController.signal
-        });
-        const data = await response.json();
-        console.log('Dog data:', data);
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Dog data fetch error:', err);
-        }
-      }
-    };
-  
     const getDogBreeds = async () => {
       try {
-        const response = await fetch('https://frontend-take-home-service.fetch.com/dogs/breeds', {
-          method: 'GET',
-          credentials: 'include',
-          signal: abortController.signal
+        const response = await fetch(`${BASE_URL}/dogs/breeds`, {
+          method: "GET",
+          credentials: "include",
+          signal: abortController.signal,
         });
         const data = await response.json();
-        //console.log('Dog breeds:', data);
-        //console.log(data)
 
-        const x = data.map((item) => {
-          return {
-            value : item,
-            label : item
-          }
-        })
-
-        setBreedList(x)
-        
+        const x = data.map((item) => ({
+          value: item,
+          label: item,
+        }));
+        console.log(x);
+        console.log("who let the dogs out");
+        setBreedList(x);
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Breeds fetch error:', err);
+        if (err.name !== "AbortError") {
+          console.error("Breeds fetch error:", err);
         }
       }
     };
-  
-    // Execute both requests
-    const fetchData = async () => {
-      try {
-        //await getDogData();
-        await getDogBreeds();
-        
-        // If you want to run them in parallel:
-        // await Promise.all([getDogData(), getDogBreeds()]);
-      } catch (err) {
-        console.error('Fetch error:', err);
-      }
-    };
-  
-    fetchData();
-  
+
+    getDogBreeds();
+
     // Cleanup function
     return () => {
       abortController.abort();
     };
+  }, [isAuthenticated]); // Run only when isAuthenticated changes
 
-
-  }, [])
-
-
-
-  const fetchQuery = () => {
+  // Fetch dog data when searchParams changes (only if authenticated)
+  useEffect(() => {
+    if (!isAuthenticated) return; // Exit if not authenticated
 
     const queryParams = new URLSearchParams();
 
-    const filter = selectedOptions.map((item) => item.value)
-    const copy = {...params, breeds : filter}
-    //console.log(copy)
-    console.log(filter)
-    setSearchParams(copy)
+    searchParams.breeds?.forEach((breed) =>
+      queryParams.append("breeds", breed)
+    );
+    
+    if (searchParams.ageMin) queryParams.append("ageMin", searchParams.ageMin);
+    if (searchParams.ageMax) queryParams.append("ageMax", searchParams.ageMax);
+    if (searchParams.size) queryParams.append("size", searchParams.size);
+    if (searchParams.from) queryParams.append("from", searchParams.from);
+    if (searchParams.sort) queryParams.append("sort", searchParams.sort);
 
-    searchParams.breeds?.forEach(breed => queryParams.append('breeds', breed));
-
-    searchParams.zipCodes?.forEach(zip => queryParams.append('zipCodes', zip));
-
-// Add other parameters
-if (searchParams.ageMin) queryParams.append('ageMin', searchParams.ageMin);
-if (searchParams.ageMax) queryParams.append('ageMax', searchParams.ageMax);
-if (searchParams.size) queryParams.append('size', searchParams.size);
-if (searchParams.from) queryParams.append('from', searchParams.from);
-if (searchParams.sort) queryParams.append('sort', searchParams.sort);
-
-
-
-    const url = `${BASE_URL}/dogs/search?${queryParams}`
-
-
-
+  
+    const url = `${BASE_URL}/dogs/search?${queryParams}`;
 
     async function fetchData() {
       try {
-          const res = await fetch(url, {
-              method: 'GET',
-              credentials: 'include'
-          });
-  
-          if (!res.ok) throw new Error(`Error: ${res.status}`);
-  
-          const data = await res.json(); // Extract data from first fetch
-  
-          // Use extracted data to make the second fetch
-          const diffRes = await fetch(`${BASE_URL}/dogs`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json', // Specify JSON data type
-              },
-              body: JSON.stringify(data.resultIds),
-              credentials: 'include'
-          });
-  
-          if (!diffRes.ok) throw new Error(`Error: ${diffRes.status}`);
-  
-          const diffData = await diffRes.json();
-          
-          console.log(diffData); // Handle or return the data
-          setDogData(diffData)
-  
+        const res = await fetch(url, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error(`Error: ${res.status}`);
+
+        const data = await res.json(); // Extract data from first fetch
+
+        data.prev ? setHasPrev(data.prev) : setHasPrev(null);
+        data.next ? setHasNext(data.next) : setHasPrev(null);
+        // Use extracted data to make the second fetch
+        const diffRes = await fetch(`${BASE_URL}/dogs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json", // Specify JSON data type
+          },
+          body: JSON.stringify(data.resultIds),
+          credentials: "include",
+        });
+
+        if (!diffRes.ok) throw new Error(`Error: ${diffRes.status}`);
+
+        const diffData = await diffRes.json();
+        
+        setDogData(diffData);
       } catch (error) {
-          console.error('Fetch error:', error);
+        console.error("Fetch error:", error);
       }
+    }
+
+    fetchData();
+  }, [searchParams, isAuthenticated]); // Run only when searchParams or isAuthenticated changes
+
+  const fetchQuery = () => {
+    if (!isAuthenticated) return; // Exit if not authenticated
+
+    const filter = selectedOptions.map((item) => item.value);
+    const copy = {
+      ...DEFAULT_PARAMS,
+      breeds: filter,
+      ageMin: minAge,
+      ageMax: maxAge,
+      size,
+      sort: `breed:${sortOrder}`,
+    };
+
+    setPageCount(1);
+    setSearchParams(copy);
+  };
+
+  async function fetchData(url) {
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+
+      const data = await res.json(); // Extract data from first fetch
+
+      data.prev ? setHasPrev(data.prev) : setHasPrev(null);
+      data.next ? setHasNext(data.next) : setHasPrev(null);
+      // Use extracted data to make the second fetch
+      const diffRes = await fetch(`${BASE_URL}/dogs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", 
+        },
+        body: JSON.stringify(data.resultIds),
+        credentials: "include",
+      });
+
+      if (!diffRes.ok) throw new Error(`Error: ${diffRes.status}`);
+
+      const diffData = await diffRes.json();
+     
+      setDogData(diffData);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
   }
-  
-  fetchData();
 
+  const handlePrevAndNext = (params, right = true) => {
+    right ? setPageCount((prev) => prev + 1) : setPageCount((prev) => prev - 1);
+    const url = `${BASE_URL}${params}`;
+    fetchData(url);
+  };
 
-  //   console.log(url)
-  //   fetch(url, {
-        
-  //     method: 'GET',
-  //     credentials: 'include' 
-        
-  // })
-  //   .then(res => res.json())
-  //   .then(res => {
+  const handleFavorites = (item) => {
+    if (favoriteList.length >= 100) return;
 
-  //     fetch(diffurl)
-  //     .then()
-  //   })
-   
+    const isAlreadyFavorite = favoriteList.some((fav) => fav.id === item.id);
+
+    if (!isAlreadyFavorite) {
+      // Add the item to the favorites list
+      setFavoriteList((prev) => [...prev, item]);
+    } else {
+      // Remove the item from the favorites list
+      setFavoriteList((prev) => prev.filter((fav) => fav.id !== item.id));
+    }
+  };
+
+  const handleFullResetOnLogOut  = () => {
+    setSearchParams(DEFAULT_PARAMS);
+    setMaxAge("");
+    setMinAge("");
+
+    setSelectedOptions([]);
+    setFavoriteList([])
+    setHasPrev(null)
+    setHasNext(null)
+    setBreedList([])
+    setMatch(null)
   }
 
-  
+  const handleReset = () => {
+    setSearchParams(DEFAULT_PARAMS);
+    setMaxAge("");
+    setMinAge("");
+
+    setSelectedOptions([]);
+  };
+
+  const findMyMatchFromFavorites = () => {
+    const listofIDs = favoriteList.map((item) => item.id);
+
+    fetch(`${BASE_URL}/dogs/match`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json", 
+      },
+      body: JSON.stringify(listofIDs),
+      credentials: "include",
+    })
+      .then((data) => {
+        return data.json();
+      })
+      .then((res) => {
+        console.log(res);
+        const match = favoriteList.find((fav) => (fav.id = res.match));
+
+        console.log(match);
+        setMatch(match);
+      })
+      .catch((err) => console.log(err));
+  };
 
   return (
     <div>
+      {isAuthenticated ? (
+        <>
+          <div className="row">
+            <div className="col">
+              <button onClick={() => handleLogout(handleFullResetOnLogOut)} className="mb-3">Logout</button>
+              <div className="searchBox">
+              <SearchableDropdown
+                handleReset={handleReset}
+                options={breedList}
+                onChange={setSelectedOptions}
+                minAge={minAge}
+                maxAge={maxAge}
+                setMinAge={setMinAge}
+                setMaxAge={setMaxAge}
+                selectedOptions={selectedOptions}
+                setSelectedOptions={setSelectedOptions}
+                size={size}
+                setSize={setSize}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                fetchQuery={fetchQuery}
+              />
+            
+              <div>
+                <div
+                  className="d-flex align-items-center mt-4 mb-4"
+                  style={{ width: "200px" }}
+                >
+                  <FaChevronLeft
+                    size={16}
+                    onClick={() => handlePrevAndNext(hasPrev, false)}
+                  />
+                  <p className="mb-0 mx-2">{pageCount}</p>
+                  <FaChevronRight
+                    size={16}
+                    onClick={() => handlePrevAndNext(hasNext)}
+                  />
+                </div>
+              </div>
+              <button onClick={findMyMatchFromFavorites}>find match</button>
 
+                {yourMatch && (
+                  <>
+                    <h3>your match!</h3>
+                    <DogCard {...yourMatch} />
+                  </>
+                )}
+              </div>
 
-       <div>
-
-       {isAuthenticated ? (
-  <>
-    <p>testsdsfs</p>
-    <button onClick={handleLogout}>Logout</button>
-    {/* <TokenTagger />
-    <DogCard /> */}
-    <SearchableDropdown options={breedList} onChange={setSelectedOptions} />
-
-    <div>
-
-      <button onClick={fetchQuery}>Search</button>
-
-
-      {dogData.length !== 0 && (
-        dogData.map((item) => <DogCard {...item}/>)
+              <div>
+                
+              </div>
+            </div>
+            <div className="col">
+              <div className="d-flex flex-wrap">
+                {dogData.length !== 0 &&
+                  dogData.map((item) => (
+                    <DogCard {...item} handleFavorites={handleFavorites} />
+                  ))}
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <Login />
       )}
-
-
     </div>
-  </>
-) : (
-  <Login />
-)}
-        
-      </div>
-
-    </div>
-  )
-}
-
-
+  );
+};
 
 const Login = () => {
-
-
-
-
-
-
-//     const handleSubmit = () => {
-
-
-//       fetch('https://frontend-take-home-service.fetch.com/auth/login', {
-// method: 'POST',
-// headers: {
-//   'Content-Type': 'application/json', // Specify JSON data type
-// },
-// body: JSON.stringify({ // Convert object to JSON string
-//   name: 'testingM123',
-//   email: 'testing@yahoo.com',
-
-//   //fake : 'fakedata'
-// }),
-// credentials: 'include'
-// })
-// .then(res => {
-//     //console.log(response)
-//     //console.log(res.headersList)
-   
-//   return res.json()
-//   //return res
-
-// }) // Parse JSON response
-// .then(data => console.log('Success:', data))
-// .catch(error => {
-//     console.error('Error:', error)
-//       console.log("wtf")
-//       console.log(error)
-// });
-
-
-  //}
-
   const { handleLogin } = useAuth();
   const [credentials, setCredentials] = useState({
-    name: 'testingM123',
-    email: 'testing@yahoo.com'
+    name: "",
+    email: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const success = await handleLogin(credentials);
       if (!success) {
-        setError('Invalid username or password');
+        setError("Invalid username or password");
       }
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError("Login failed. Please try again.");
     }
   };
-  
-
 
   return (
 
     <div className="login-container">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Username:</label>
-          <input
-            type="text"
-            value={credentials.username}
-            onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-            //required
-          />
-        </div>
-        <div className="form-group">
-          <label>Password:</label>
-          <input
-            type="password"
-            value={credentials.password}
-            onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-            //required
-          />
-        </div>
-        {error && <div className="error-message">{error}</div>}
-        <button type="submit" className="login-button">Sign In</button>
+      <form className="login-form" onSubmit={handleSubmit}>
+        <h2>Login</h2>
+        <input 
+          type="text" 
+          name="name" 
+          placeholder="Name" 
+          value={credentials.name} 
+          onChange={((e) => setCredentials({...credentials, name : e.target.value}))} 
+          required 
+        />
+        <input 
+          type="email" 
+          name="email" 
+          placeholder="Email" 
+          value={credentials.email} 
+          onChange={((e) => setCredentials({...credentials, email : e.target.value}))} 
+          required 
+        />
+        <button type="submit">Login</button>
       </form>
     </div>
-    
-  )
-}
+  );
+};
 
 function App() {
-
-
-
-
-  
-  
-
-
-  return (
-    <div className="container">
-
+  return ( 
       <AuthProvider>
-
-        <Main/>
-      </AuthProvider>
       
-    </div>
+          <div className="container">
+          <Main />
+          </div>
+        
+      </AuthProvider>
+   
   );
 }
 
